@@ -34,3 +34,4 @@ Supported statuses: `missing:critical`, `expired:critical`, `expiring_soon:warni
 
 Dashboard: https://subcontractor-coi-certificate-of-insuran.vokrix.co
 Vercel: subcontractor-coi-certificate-of-insuran
+Railway: subcontractor-coi-certificate-of-insuran
