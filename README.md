@@ -31,3 +31,6 @@ The poller passes raw file bytes (`bytes`) to `process_file(file_bytes)`, which 
 
 Supported statuses: `missing:critical`, `expired:critical`, `expiring_soon:warning`, `valid_compliant:good`, `flagged:critical`, `needs_review:warning`, `blocked:critical`.
 
+
+Dashboard: https://subcontractor-coi-certificate-of-insuran.vokrix.co
+Vercel: subcontractor-coi-certificate-of-insuran
