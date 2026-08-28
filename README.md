@@ -36,3 +36,5 @@ Dashboard: https://subcontractor-coi-certificate-of-insuran.vokrix.co
 Vercel: subcontractor-coi-certificate-of-insuran
 Railway: subcontractor-coi-certificate-of-insuran
 Cloudflare: subcontractor-coi-certificate-of-insuran.vokrix.co
+
+Landing: https://vokrix.co/subcontractor-coi-certificate-of-insuran
