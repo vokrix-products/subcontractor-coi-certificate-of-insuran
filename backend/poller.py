@@ -13,7 +13,7 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 JOBS_URL = f"{SUPABASE_URL}/rest/v1/jobs"
 RECORDS_URL = f"{SUPABASE_URL}/rest/v1/records"
-NOTIFICATIONS_URL = "https://njyvnmczoydsaewvfhyq.supabase.co/rest/v1/notifications"
+NOTIFICATIONS_URL = f"{SUPABASE_URL}/rest/v1/notifications"
 
 
 def headers():
@@ -87,43 +87,36 @@ def poll():
                 try:
                     file_bytes = download_file("uploads", input_file_path)
                     result = processor.process_file(file_bytes)
-                    if isinstance(result, dict):
-                        result_json = json.dumps(result, default=str)
-                        details = result
-                    else:
-                        result_json = json.dumps({"data": result}, default=str)
-                        details = {"data": result}
 
-                    due_date = None
-                    record_status = "pending"
-                    if isinstance(result, dict):
-                        due_date = result.get("due_date")
-                        record_status = result.get("status", "pending")
+                    # process_file returns a list of records; normalize to a list.
+                    items = result if isinstance(result, list) else [result]
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        record_payload = {
+                            "product_id": PRODUCT_ID,
+                            "customer_id": customer_id,
+                            "title": item.get("title") or "Unknown Subcontractor",
+                            "status": item.get("status") or "needs_review:warning",
+                            "details": item,
+                            "source_file_path": input_file_path,
+                            "due_date": item.get("due_date"),
+                        }
+                        record_resp = requests.post(RECORDS_URL, headers=headers(), json=record_payload)
+                        record_resp.raise_for_status()
 
-                    record_payload = {
-                        "product_id": PRODUCT_ID,
-                        "customer_id": customer_id,
-                        "title": result.get("title", "Uploaded document") if isinstance(result, dict) else "Uploaded document",
-                        "status": record_status,
-                        "details": details,
-                        "source_file_path": input_file_path,
-                        "due_date": due_date,
-                    }
-
-                    record_resp = requests.post(RECORDS_URL, headers=headers(), json=record_payload)
-                    record_resp.raise_for_status()
-
+                    result_json = json.dumps({"data": items}, default=str)
                     output_file_path = upload_result(job_id, result_json)
                     completed_at = datetime.now(timezone.utc).isoformat()
 
                     update_payload = {
                         "status": "completed",
                         "output_file_path": output_file_path,
-                        "result_summary": "Processing completed successfully",
+                        "result_summary": f"Processed {len(items)} record(s)",
                         "completed_at": completed_at,
                     }
                     requests.patch(f"{JOBS_URL}?id=eq.{job_id}", headers=headers(), json=update_payload).raise_for_status()
-                    insert_notification(PRODUCT_ID, customer_id, "Processing complete", "Your upload has been processed successfully.", "success")
+                    insert_notification(PRODUCT_ID, customer_id, "Processing complete", f"Your upload has been processed successfully ({len(items)} record(s)).", "success")
 
                 except Exception as e:
                     failed_at = datetime.now(timezone.utc).isoformat()
